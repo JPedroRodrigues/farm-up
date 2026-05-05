@@ -5,8 +5,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.github.jpedrorodrigues.farmup.screens.MainMenuScreen;
-import com.github.jpedrorodrigues.farmup.screens.StoryScreen;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Program extends Game {
@@ -23,7 +21,6 @@ public class Program extends Game {
         font.setUseIntegerPositions(false);
         font.getData().setScale(viewport.getWorldHeight() / Gdx.graphics.getHeight());
 
-        // Alterado temporariamente para testar a GameplayScreen com o mapa
         this.setScreen(new com.github.jpedrorodrigues.farmup.screens.GameplayScreen(this));
     }
 

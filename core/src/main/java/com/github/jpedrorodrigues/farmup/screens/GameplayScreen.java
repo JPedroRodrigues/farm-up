@@ -10,6 +10,7 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.github.jpedrorodrigues.farmup.Program;
+import com.github.jpedrorodrigues.farmup.domain.Meowscle;
 
 public class GameplayScreen implements Screen {
     private final Program game;
@@ -20,6 +21,8 @@ public class GameplayScreen implements Screen {
     private TiledMap map;
     private OrthogonalTiledMapRenderer mapRenderer;
 
+    private Meowscle player;
+
     public GameplayScreen(Program game) {
         this.game = game;
     }
@@ -27,10 +30,13 @@ public class GameplayScreen implements Screen {
     @Override
     public void show() {
         this.camera = new OrthographicCamera();
+        this.camera.zoom = 0.5f;
         this.viewport = new ExtendViewport(480, 270, this.camera);
         
         this.map = new TmxMapLoader().load("map/map.tmx");
         this.mapRenderer = new OrthogonalTiledMapRenderer(this.map);
+
+        this.player = new Meowscle(200, 200);
     }
 
     @Override
@@ -38,10 +44,18 @@ public class GameplayScreen implements Screen {
         Gdx.gl.glClearColor(0.55f, 0.77f, 0.83f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        player.update(delta);
+
+        camera.position.set(player.getBounds().x + player.getBounds().width / 2, player.getBounds().y + player.getBounds().height / 2, 0);
         this.camera.update();
 
         this.mapRenderer.setView(this.camera);
         this.mapRenderer.render();
+
+        game.batch.setProjectionMatrix(camera.combined);
+        game.batch.begin();
+        player.draw(game.batch);
+        game.batch.end();
     }
 
     @Override
@@ -65,5 +79,6 @@ public class GameplayScreen implements Screen {
     public void dispose() {
         if (this.map != null) this.map.dispose();
         if (this.mapRenderer != null) this.mapRenderer.dispose();
+        if (this.player != null) this.player.dispose();
     }
 }
