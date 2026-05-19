@@ -1,31 +1,21 @@
 package com.github.jpedrorodrigues.farmup.domain;
 
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 
-public abstract class GameObject {
+public abstract class GameSprite {
     protected Sprite sprite;
     protected Rectangle bounds;
 
-    public GameObject(Texture texture, float x, float y, float width, float height) {
-        this.sprite = new Sprite(texture);
-        this.sprite.setSize(width, height);
-        this.sprite.setPosition(x, y); 
-        this.sprite.setOriginCenter();
-
-        this.bounds = new Rectangle(x, y, width, height);
-    }
-
-    public GameObject(TextureRegion region, float x, float y, float width, float height) {
+    public GameSprite(TextureRegion region, float x, float y, float width, float height) {
         this.sprite = new Sprite(region);
+        this.sprite.setPosition(x, y);
         this.sprite.setSize(width, height);
-        this.sprite.setPosition(x, y); 
-        this.sprite.setOriginCenter();
 
         this.bounds = new Rectangle(x, y, width, height);
+
     }
 
     public abstract void update(float dt);

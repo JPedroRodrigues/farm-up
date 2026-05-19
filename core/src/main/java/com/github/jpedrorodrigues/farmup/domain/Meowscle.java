@@ -5,6 +5,10 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.github.jpedrorodrigues.farmup.domain.Enum.Direction;
+import com.github.jpedrorodrigues.farmup.domain.Enum.PlayerAction;
 
 public class Meowscle extends GameObject {
     private Texture walkSheet;
@@ -17,16 +21,17 @@ public class Meowscle extends GameObject {
 
     private float speed = 100f;
     private float stateTime = 0f;
-    private String direction = "DOWN";
+    private Direction direction = Direction.DOWN;
 
-    private String currentAction = "None";
+    private PlayerAction action = PlayerAction.IDLE;
     private float actionTimer = 0f;
+    private TiledMap map;
 
     public Meowscle(float x, float y) {
-        super(new Texture("Characters/Basic Charakter Spritesheet.png"), x, y, 48, 48);
+        super(new Texture("characters/basic-character-spritesheet.png"), x, y, 48, 48);
         
         walkSheet = super.sprite.getTexture();
-        actionSheet = new Texture("Characters/Basic Charakter Actions.png");
+        actionSheet = new Texture("characters/basic-character-actions.png");
         
         TextureRegion[][] walkFrames = TextureRegion.split(walkSheet, 48, 48);
         walkDown = new Animation<>(0.15f, walkFrames[0]);
@@ -55,6 +60,27 @@ public class Meowscle extends GameObject {
         super.sprite.setRegion(walkDown.getKeyFrame(0));
     }
 
+    public void setMap(TiledMap map) {
+        this.map = map;
+    }
+
+    private boolean isValidMove(float newX, float newY) {
+        if (this.map == null) return true;
+
+        // Check center of player's feet
+        float checkX = newX + this.bounds.width / 2;
+        float checkY = newY + 4f; // slightly above bottom edge
+
+        TiledMapTileLayer grassLayer = (TiledMapTileLayer) map.getLayers().get("grass");
+        if (grassLayer == null) return true;
+
+        int tileX = (int) (checkX / grassLayer.getTileWidth());
+        int tileY = (int) (checkY / grassLayer.getTileHeight());
+
+        TiledMapTileLayer.Cell cell = grassLayer.getCell(tileX, tileY);
+        return cell != null && cell.getTile() != null;
+    }
+
     @Override
     public void update(float dt) {
         boolean isMoving = false;
@@ -64,31 +90,31 @@ public class Meowscle extends GameObject {
             actionTimer -= dt;
             
             TextureRegion currentFrame = null;
-            if (currentAction.equals("Watering")) {
+            if (action.equals(PlayerAction.WATERING)) {
                 if (waterDown != null) {
                     switch (direction) {
-                        case "UP": currentFrame = waterUp.getKeyFrame(stateTime, true); break;
-                        case "DOWN": currentFrame = waterDown.getKeyFrame(stateTime, true); break;
-                        case "LEFT": currentFrame = waterLeft.getKeyFrame(stateTime, true); break;
-                        case "RIGHT": currentFrame = waterRight.getKeyFrame(stateTime, true); break;
+                        case UP: currentFrame = waterUp.getKeyFrame(stateTime, true); break;
+                        case DOWN: currentFrame = waterDown.getKeyFrame(stateTime, true); break;
+                        case LEFT: currentFrame = waterLeft.getKeyFrame(stateTime, true); break;
+                        case RIGHT: currentFrame = waterRight.getKeyFrame(stateTime, true); break;
                     }
                 }
-            } else if (currentAction.equals("Plowing")) {
+            } else if (action.equals(PlayerAction.PLOWING)) {
                 if (plowDown != null) { 
                     switch (direction) {
-                        case "UP": currentFrame = plowUp.getKeyFrame(stateTime, true); break;
-                        case "DOWN": currentFrame = plowDown.getKeyFrame(stateTime, true); break;
-                        case "LEFT": currentFrame = plowLeft.getKeyFrame(stateTime, true); break;
-                        case "RIGHT": currentFrame = plowRight.getKeyFrame(stateTime, true); break;
+                        case UP: currentFrame = plowUp.getKeyFrame(stateTime, true); break;
+                        case DOWN: currentFrame = plowDown.getKeyFrame(stateTime, true); break;
+                        case LEFT: currentFrame = plowLeft.getKeyFrame(stateTime, true); break;
+                        case RIGHT: currentFrame = plowRight.getKeyFrame(stateTime, true); break;
                     }
                 }
-            } else if (currentAction.equals("Using Axe")) {
+            } else if (action.equals(PlayerAction.CUTTING_TREE)) {
                 if (axeDown != null) {
                     switch (direction) {
-                        case "UP": currentFrame = axeUp.getKeyFrame(stateTime, true); break;
-                        case "DOWN": currentFrame = axeDown.getKeyFrame(stateTime, true); break;
-                        case "LEFT": currentFrame = axeLeft.getKeyFrame(stateTime, true); break;
-                        case "RIGHT": currentFrame = axeRight.getKeyFrame(stateTime, true); break;
+                        case UP: currentFrame = axeUp.getKeyFrame(stateTime, true); break;
+                        case DOWN: currentFrame = axeDown.getKeyFrame(stateTime, true); break;
+                        case LEFT: currentFrame = axeLeft.getKeyFrame(stateTime, true); break;
+                        case RIGHT: currentFrame = axeRight.getKeyFrame(stateTime, true); break;
                     }
                 }
             }
@@ -98,7 +124,7 @@ public class Meowscle extends GameObject {
             }
 
             if (actionTimer <= 0) {
-                currentAction = "None";
+                action = PlayerAction.IDLE;
                 System.out.println("Action finished");
             }
         } else {
@@ -107,54 +133,63 @@ public class Meowscle extends GameObject {
 
             if (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
                 dy += speed * dt;
-                direction = "UP";
+                direction = Direction.UP;
                 isMoving = true;
             } else if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
                 dy -= speed * dt;
-                direction = "DOWN";
+                direction = Direction.DOWN;
                 isMoving = true;
             } else if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
                 dx -= speed * dt;
-                direction = "LEFT";
+                direction = Direction.LEFT;
                 isMoving = true;
             } else if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
                 dx += speed * dt;
-                direction = "RIGHT";
+                direction = Direction.RIGHT;
                 isMoving = true;
             }
             
-            this.setPosition(this.sprite.getX() + dx, this.sprite.getY() + dy);
+            float newX = this.sprite.getX() + dx;
+            float newY = this.sprite.getY() + dy;
+
+            if (isValidMove(newX, newY)) {
+                this.setPosition(newX, newY);
+            } else if (isValidMove(newX, this.sprite.getY())) {
+                this.setPosition(newX, this.sprite.getY());
+            } else if (isValidMove(this.sprite.getX(), newY)) {
+                this.setPosition(this.sprite.getX(), newY);
+            }
 
             TextureRegion currentFrame = walkDown.getKeyFrame(0);
             if (isMoving) {
                 switch (direction) {
-                    case "UP": currentFrame = walkUp.getKeyFrame(stateTime, true); break;
-                    case "DOWN": currentFrame = walkDown.getKeyFrame(stateTime, true); break;
-                    case "LEFT": currentFrame = walkLeft.getKeyFrame(stateTime, true); break;
-                    case "RIGHT": currentFrame = walkRight.getKeyFrame(stateTime, true); break;
+                    case UP: currentFrame = walkUp.getKeyFrame(stateTime, true); break;
+                    case DOWN: currentFrame = walkDown.getKeyFrame(stateTime, true); break;
+                    case LEFT: currentFrame = walkLeft.getKeyFrame(stateTime, true); break;
+                    case RIGHT: currentFrame = walkRight.getKeyFrame(stateTime, true); break;
                 }
             } else {
                 switch (direction) {
-                    case "UP": currentFrame = walkUp.getKeyFrame(0); break;
-                    case "DOWN": currentFrame = walkDown.getKeyFrame(0); break;
-                    case "LEFT": currentFrame = walkLeft.getKeyFrame(0); break;
-                    case "RIGHT": currentFrame = walkRight.getKeyFrame(0); break;
+                    case UP: currentFrame = walkUp.getKeyFrame(0); break;
+                    case DOWN: currentFrame = walkDown.getKeyFrame(0); break;
+                    case LEFT: currentFrame = walkLeft.getKeyFrame(0); break;
+                    case RIGHT: currentFrame = walkRight.getKeyFrame(0); break;
                 }
             }
             super.sprite.setRegion(currentFrame);
 
             if (Gdx.input.isKeyJustPressed(Input.Keys.B)) {
-                currentAction = "Watering";
+                action = PlayerAction.WATERING;
                 actionTimer = 0.5f;
                 stateTime = 0f;
                 System.out.println("Meowscle is Watering!");
             } else if (Gdx.input.isKeyJustPressed(Input.Keys.N)) {
-                currentAction = "Plowing";
+                action = PlayerAction.PLOWING;
                 actionTimer = 0.5f;
                 stateTime = 0f;
                 System.out.println("Meowscle is Plowing the soil!");
             } else if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
-                currentAction = "Using Axe";
+                action = PlayerAction.CUTTING_TREE;
                 actionTimer = 0.5f;
                 stateTime = 0f;
                 System.out.println("Meowscle is using his Axe!");
@@ -165,5 +200,17 @@ public class Meowscle extends GameObject {
     public void dispose() {
         if (walkSheet != null) walkSheet.dispose();
         if (actionSheet != null) actionSheet.dispose();
+    }
+
+    public Direction getDirection() {
+        return this.direction;
+    }
+
+    public PlayerAction getAction() {
+        return this.action;
+    }
+
+    public float getActionTimer() {
+        return this.actionTimer;
     }
 }
